@@ -1,0 +1,191 @@
+How do I add notes?
+ChatGPT said:
+
+Great question!
+
+To add new notes, you need to:
+
+✅ Backend Requirements (already assumed from your NoteListCreate view):
+
+You likely already have an API endpoint that allows POST /api/notes/ to create a new note.
+
+From your views.py, this class:
+
+class NoteListCreate(generics.ListCreateAPIView):
+
+
+...supports both:
+
+GET /api/notes/ – list notes
+
+POST /api/notes/ – create a new note
+
+So all you need to do now is:
+
+✅ Frontend: Add a form in your Home.jsx to create notes
+
+Here’s the full updated Home.jsx including:
+
+A form for adding notes (title + content)
+
+Submitting the note via Axios POST to /api/notes/
+
+Refreshing the list after adding
+
+🧩 Full Home.jsx with Add Note Feature:
+import { useState, useEffect } from "react";
+import api from "../api";
+
+function Home() {
+  const [notes, setNotes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+
+  // Fetch notes when component mounts
+  useEffect(() => {
+    getNotes();
+  }, []);
+
+  const getNotes = () => {
+    api
+      .get("/api/notes/")
+      .then((res) => {
+        setNotes(res.data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        alert("Failed to fetch notes.");
+        setLoading(false);
+      });
+  };
+
+  const addNote = (e) => {
+    e.preventDefault();
+    if (!title || !content) {
+      alert("Please fill out both fields.");
+      return;
+    }
+
+    api
+      .post("/api/notes/", { title, content })
+      .then((res) => {
+        alert("Note added!");
+        setTitle("");
+        setContent("");
+        getNotes(); // Refresh the list
+      })
+      .catch((err) => {
+        alert("Failed to add note.");
+        console.error(err);
+      });
+  };
+
+  const deleteNote = (id) => {
+    api
+      .delete(`/api/notes/delete/${id}/`)
+      .then((res) => {
+        if (res.status === 204) {
+          alert("Note deleted!");
+          getNotes();
+        } else {
+          alert("Failed to delete note.");
+        }
+      })
+      .catch((error) => {
+        alert("Error deleting note.");
+      });
+  };
+
+  return (
+    <div className="home-container">
+      <h1>Your Notes</h1>
+
+      {/* Add Note Form */}
+      <form onSubmit={addNote} style={{ marginBottom: "30px" }}>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          style={{ display: "block", marginBottom: "10px", width: "100%" }}
+        />
+        <textarea
+          placeholder="Content"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          rows="4"
+          style={{ display: "block", marginBottom: "10px", width: "100%" }}
+        />
+        <button type="submit">Add Note</button>
+      </form>
+
+      {/* List Notes */}
+      {loading ? (
+        <p>Loading...</p>
+      ) : notes.length === 0 ? (
+        <p>No notes yet.</p>
+      ) : (
+        <ul>
+          {notes.map((note) => (
+            <li key={note.id} style={{ marginBottom: "20px" }}>
+              <h3>{note.title}</h3>
+              <p>{note.content}</p>
+              <button onClick={() => deleteNote(note.id)}>Delete</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default Home;
+
+🧪 Testing the Add Note Flow
+
+Start your Django backend:
+
+python manage.py runserver
+
+
+Log in via frontend (so the token is stored in localStorage).
+
+Visit the Home page — you should see the form and existing notes.
+
+Fill out the form → Click "Add Note" → Note should appear in the list.
+
+✅ Backend Reminder: Your Note model should be connected to a logged-in user
+
+Which it seems like you're doing via:
+
+def perform_create(self, serializer):
+    serializer.save(author=self.request.user)
+
+
+So, make sure the user is authenticated, and you're sending the Authorization header with your Axios instance.
+
+🔐 Optional: Add token auth to api.js
+// src/api.js
+import axios from "axios";
+import { ACCESS_TOKEN } from "./constants";
+
+const api = axios.create({
+  baseURL: "http://localhost:8000",
+});
+
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem(ACCESS_TOKEN);
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export default api;
+
+
+Let me know if you want help with styling the notes UI or protecting the route for authenticated users only.
