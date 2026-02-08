@@ -22,3 +22,51 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+
+# ========================
+# DJANGO / PYTHON
+# ========================
+
+# virtual environment (VERY IMPORTANT)
+venv/
+.env/
+__pycache__/
+*.pyc
+*.pyo
+*.sqlite3
+
+# Django static/cache
+staticfiles/
+media/
+
+# logs
+*.log
+
+# ========================
+# REACT / NODE
+# ========================
+
+node_modules/
+build/
+dist/
+
+npm-debug.log*
+yarn-error.log*
+
+# ========================
+# ENV VARIABLES (SECRETS)
+# ========================
+
+.env
+.env.local
+.env.*.local
+
+# ========================
+# OS / EDITOR
+# ========================
+
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
